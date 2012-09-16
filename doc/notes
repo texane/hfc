@@ -1,0 +1,14 @@
+[ tests ]
+
+[[ resolution ]]
+
+8 bit timer2 is used to generate a pwm whose period is:
+(fcpu / (OCR2A * 2 * prescal))
+
+# computed, measured(hfc)
+30.637 30.517568
+32.552 32.424916
+33.967 33.378590
+35.511 35.285938
+37.202 37.193286
+39.062 39.100634
