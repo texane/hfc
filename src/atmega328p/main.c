@@ -202,12 +202,12 @@ int main(void)
   TIMSK2 = 0;
   TCNT2 = 0;
 
-#if 0 /* 41khz period */
+  /* fpwm = (16 * 10^6) / (OCR2A * 2 * prescal) */
+#if 0 /* prescal = 1, fpwm = 41025.64102 */
   OCR2A = 195;
   TCCR2B = (1 << 3) | (1 << 0);
   TCCR2A = (1 << 6) | (3 << 0);
-#else /* hires pwm */
-  /* fpwm = (16 * 10^6) / (OCR2A * 2 * 1024) */
+#else /* hires pwm, prescal = 1024 */
   OCR2A = 255; /* 30.63725490196078431372 */
   OCR2A = 240; /* 32.55208333333333333333 */
   OCR2A = 230; /* 33.96739130434782608695 */

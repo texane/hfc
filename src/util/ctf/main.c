@@ -14,7 +14,8 @@ static const uint16_t counters[] =
   0x186,
   0x2e8,
   0xaaa,
-  0x1000
+  0x1000,
+  0xa72f
 };
 
 int main(int ac, char** av)
