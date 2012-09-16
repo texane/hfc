@@ -69,9 +69,12 @@ Having define the following,
 Then,
 Tintegr = 2^Tbits * Tpresc / Fcpu
 
-Thus, the following must hold:
+The following must hold:
 Tintegr * Fin < 2^Cbits
 Thus,
 Fin < 2^Cbits / Tintegr
 Thus,
 Fin < 2^(Cbits - Tbits) * Fcpu / Tpresc
+
+And,
+Fres = 1 / Tintegr = Fcpu / (2^Tbits * Tpresc)
