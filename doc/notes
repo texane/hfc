@@ -1,3 +1,44 @@
+[ theory of operation ]
+
+refer to doc/pic/theory_of_operation
+
+In the above schema, 2 counters are used:
+. a counter that is incremented at every rising edge of the input
+signal whose frequency is to be measured. when the counter reaches
+its upper limit, an interrupt occurs,
+. a timer that is incremented at every prescaled clock tick. the
+prescaler is user defined. when the timer reaches a top limit, an
+overflow interrupt occurs.
+
+As shown, an auxiliary software variable is used to track counter
+overflows since the counter register is not wide enough for the
+integration time.
+
+
+[ API ]
+
+void hfc_start(void);
+start a frequency measure and return immediately.
+
+uint8_t hfc_poll(void);
+return non zero if the timer overflowed, meaning that the
+next call to hfc_wait will immediately return.
+
+uint16_t hfc_wait(void);
+busy wait until timer overflow. return the frequency counter,
+that must be multiplied by the frequency resolution to get the
+actual frequency in hertz.
+
+uint16_t hfc_start_wait(void);
+combine hfc_start and hfc_wait.
+
+
+[ limits ]
+frequency resolution: 0.953674 hz per tick
+max measurable frequency: 62499.979264 hz
+measure time: 1.048576 seconds
+
+
 [ tests ]
 
 [[ resolution ]]
@@ -12,3 +53,25 @@
 35.511 35.285938
 37.202 37.193286
 39.062 39.100634
+
+
+[ formula ]
+
+Having define the following,
+. Fcpu is the cpu frequency in hertz,
+. Fin the input frequency to measure in hertz,
+. Fres the frequency resolution in hertz per bits,
+. Cbits is the counter bit width (ie. 8 or 16),
+. Tbits is the timer bit width (ie. 8 or 16),
+. Tpresc is the timer prescaler,
+. Tintegr integrating time, in seconds.
+
+Then,
+Tintegr = 2^Tbits * Tpresc / Fcpu
+
+Thus, the following must hold:
+Tintegr * Fin < 2^Cbits
+Thus,
+Fin < 2^Cbits / Tintegr
+Thus,
+Fin < 2^(Cbits - Tbits) * Fcpu / Tpresc
