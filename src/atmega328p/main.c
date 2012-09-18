@@ -158,6 +158,8 @@ static void hfc_start(void)
   tim1_ovf_counter = 0;
   tim1_cur_counter = 0;
   tim2_is_ovf = 0;
+
+  /* 0x100 overflows make 16 bits */
   tim2_ovf_counter = 0xff;
 
   /* configure tim2
