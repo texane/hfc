@@ -10,10 +10,10 @@ static inline double compute_tmax
 int main(int ac, char** av)
 {
   static const double fcpu = 16000000;
-  static const double fpwm = 40413;
+  static const double fpwm = 500000;
 
   /* which is 16 bits */
-#define CONFIG_TIMER 1
+#define CONFIG_TIMER 2
 
 #if (CONFIG_TIMER == 1)
   static const double tprescals[] =
@@ -25,9 +25,8 @@ int main(int ac, char** av)
     1024
   };
 
-  static const unsigned int tbits = 16;
-  /* static const unsigned int cbits = 8; */
-  static const unsigned int cbits = 16;
+  static const unsigned int tbits = 16; /* 16 hard */
+  static const unsigned int cbits = 16; /* 8 hard + 8 soft */
 #elif (CONFIG_TIMER == 2)
   static const double tprescals[] =
   {
@@ -41,9 +40,8 @@ int main(int ac, char** av)
     1024
   };
 
-  /* static const unsigned int tbits = 8; */
-  static const unsigned int tbits = 16;
-  static const unsigned int cbits = 16;
+  static const unsigned int tbits = 16; /* 8 hard + 8 soft */
+  static const unsigned int cbits = 18; /* 16 hard + 2 soft */
 #endif /* CONFIG_TIMER == x */
 
   unsigned int i;

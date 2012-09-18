@@ -77,6 +77,22 @@ static uint8_t* uint16_to_string(uint16_t x)
   return buf;
 }
 
+static uint8_t* uint32_to_string(uint32_t x)
+{
+  static uint8_t buf[8];
+
+  buf[7] = hex(nibble(x, 0));
+  buf[6] = hex(nibble(x, 1));
+  buf[5] = hex(nibble(x, 2));
+  buf[4] = hex(nibble(x, 3));
+  buf[3] = hex(nibble(x, 4));
+  buf[2] = hex(nibble(x, 5));
+  buf[1] = hex(nibble(x, 6));
+  buf[0] = hex(nibble(x, 7));
+
+  return buf;
+}
+
 
 /* high resolution frequency counter implementation
  */
@@ -89,11 +105,23 @@ static uint8_t* uint16_to_string(uint16_t x)
    overflow without any notice past 0xff.
  */
 
-static volatile uint8_t tim0_ovf_counter;
+static volatile uint8_t tim2_ovf_counter;
+static volatile uint8_t tim2_is_ovf;
+static volatile uint16_t tim1_cur_counter;
 
-ISR(TIMER0_OVF_vect)
+ISR(TIMER2_OVF_vect)
 {
-  ++tim0_ovf_counter;
+  if ((tim2_ovf_counter--) == 0)
+  {
+    /* disable tim1 before reading */
+    TCCR1B = 0;
+    tim1_cur_counter = TCNT1;
+
+    /* disable tim2 */
+    TCCR2B = 0;
+
+    tim2_is_ovf = 1;
+  }
 }
 
 /* timer1 interrupt handler. timer1 is a 16 bits
@@ -109,66 +137,59 @@ ISR(TIMER0_OVF_vect)
    tim0_is_ovf is set to notify the application.
  */
 
-static volatile uint8_t tim1_is_ovf;
-static volatile uint8_t tim0_cur_counter;
+static volatile uint8_t tim1_ovf_counter;
 
 ISR(TIMER1_OVF_vect)
 {
-  /* disable tim0 before reading */
-  TCCR0B = 0;
-  tim0_cur_counter = TCNT0;
-
-  /* disable tim1 */
-  TCCR1B = 0;
-
-  tim1_is_ovf = 1;
+  ++tim1_ovf_counter;
 }
 
 static void hfc_start(void)
 {
-  /* resolution: 0.953674 hz per tick */
-  /* fmax: 62499.979264 hz */
-  /* acquisition time: 1.048576 seconds */
+  /* resolution: 1.907349 hz per tick */
+  /* fmax: 500 khz */
+  /* acquisition time: 0.524288 seconds */
 
   /* disable interrupts */
   TIMSK1 = 0;
-  TIMSK0 = 0;
+  TIMSK2 = 0;
 
   /* reset stuff */
-  tim1_is_ovf = 0;
-  tim0_ovf_counter = 0;
-  tim0_cur_counter = 0;
+  tim1_ovf_counter = 0;
+  tim1_cur_counter = 0;
+  tim2_is_ovf = 0;
+  tim2_ovf_counter = 0xff;
 
-  /* configure tim1
+  /* configure tim2
      normal operation
-     prescaler 256
+     prescaler 128
      enable interrupt on overflow
    */
+  TCNT2 = 0;
+  TIMSK2 = 1 << 0;
+  TCCR2A = 0;
+  TCCR2B = 0;
+
+  /* configure tim1
+     t1 pin (pd5) rising edge as external clock
+   */
+  DDRD &= ~(1 << 5);
   TCNT1 = 0;
   TIMSK1 = 1 << 0;
   TCCR1A = 0;
   TCCR1B = 0;
 
-  /* configure tim0
-     t0 pin (pd4) rising edge as external clock
-   */
-  DDRD &= ~(1 << 4);
-  TCNT0 = 0;
-  TIMSK0 = 1 << 0;
-  TCCR0A = 0;
-  TCCR0B = 0;
-
-  /* start tim0, tim1 */
-  TCCR0B = 7 << 0;
-  TCCR1B = 2 << 0;
+  /* start tim1, tim2 */
+  TCCR1B = 7 << 0;
+  TCCR2B = 5 << 0;
 }
 
 static uint8_t hfc_poll(void)
 {
-  return tim1_is_ovf;
+  return tim2_is_ovf;
 }
 
-static uint16_t hfc_wait(void)
+static uint32_t hfc_wait(void)
 {
   /* busy wait for tim1 to overflow. returns the resulting
      16 bits counter, to be multiplied by the frequency
@@ -177,12 +198,12 @@ static uint16_t hfc_wait(void)
    */
 
   /* force inline, do not use hfc_poll */
-  while (tim1_is_ovf == 0) ;
+  while (tim2_is_ovf == 0) ;
 
-  return ((uint16_t)tim0_ovf_counter << 8) | (uint16_t)tim0_cur_counter;
+  return ((uint32_t)tim1_ovf_counter << 16) | (uint32_t)tim1_cur_counter;
 }
 
-static inline uint16_t hfc_start_wait(void)
+static inline uint32_t hfc_start_wait(void)
 {
   hfc_start();
   return hfc_wait();
@@ -196,6 +217,8 @@ static inline uint16_t hfc_start_wait(void)
 
 int main(void)
 {
+#if 0 /* TIM2_PWM */
+
   /* tim2 fast pwm mode */
 
   DDRB |= 1 << 3;
@@ -223,6 +246,8 @@ int main(void)
   TCCR2A = (1 << 6) | (3 << 0);
 #endif
 
+#endif /* TIM2_PWM */
+
 #if CONFIG_UART
   uart_setup();
 #endif
@@ -231,7 +256,7 @@ int main(void)
 
   while (1)
   {
-    uart_write(uint16_to_string( hfc_start_wait() ), 4);
+    uart_write(uint32_to_string(hfc_start_wait()), 8);
     uart_write((uint8_t*)"\r\n", 2);
   }
 
