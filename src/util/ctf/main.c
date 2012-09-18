@@ -5,17 +5,8 @@
 
 static const uint16_t counters[] =
 {
-  0x20,
-  0x22,
-  0x23,
-  0x25,
-  0x27,
-  0x29,
-  0x186,
-  0x2e8,
-  0xaaa,
-  0x1000,
-  0xa72f
+  0x23e3,
+  0x23e2
 };
 
 int main(int ac, char** av)
@@ -26,7 +17,8 @@ int main(int ac, char** av)
   {
     /* const double f = (double)counters[i] / 0.262144; */
     /* const double f = (double)counters[i] / 0.001024; */
-    const double f = (double)counters[i] * 0.953674;
+    /* const double f = (double)counters[i] * 0.953674; */
+    const double f = (double)counters[i] * 30.517578;
     printf("%lf hz\n", f);
   }
 

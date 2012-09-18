@@ -26,7 +26,8 @@ int main(int ac, char** av)
   };
 
   static const unsigned int tbits = 16;
-  static const unsigned int cbits = 8;
+  /* static const unsigned int cbits = 8; */
+  static const unsigned int cbits = 16;
 #elif (CONFIG_TIMER == 2)
   static const double tprescals[] =
   {
@@ -40,7 +41,8 @@ int main(int ac, char** av)
     1024
   };
 
-  static const unsigned int tbits = 8;
+  /* static const unsigned int tbits = 8; */
+  static const unsigned int tbits = 16;
   static const unsigned int cbits = 16;
 #endif /* CONFIG_TIMER == x */
 

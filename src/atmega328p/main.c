@@ -160,7 +160,7 @@ static void hfc_start(void)
 
   /* start tim0, tim1 */
   TCCR0B = 7 << 0;
-  TCCR1B = 4 << 0;
+  TCCR1B = 2 << 0;
 }
 
 static uint8_t hfc_poll(void)
