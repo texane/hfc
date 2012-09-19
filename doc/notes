@@ -24,19 +24,19 @@ uint8_t hfc_poll(void);
 return non zero if the timer overflowed, meaning that the
 next call to hfc_wait will immediately return.
 
-uint16_t hfc_wait(void);
+uint32_t hfc_wait(void);
 busy wait until timer overflow. return the frequency counter,
 that must be multiplied by the frequency resolution to get the
 actual frequency in hertz.
 
-uint16_t hfc_start_wait(void);
+uint32_t hfc_start_wait(void);
 combine hfc_start and hfc_wait.
 
 
 [ limits ]
-frequency resolution: 0.953674 hz per tick
-max measurable frequency: 62499.979264 hz
-measure time: 1.048576 seconds
+resolution: 1.907349 hz per tick
+fmax: 500 Khz
+acquisition time: 0.524288 seconds
 
 
 [ tests ]
