@@ -64,19 +64,6 @@ static inline uint8_t hex(uint8_t x)
   return (x >= 0xa) ? 'a' + x - 0xa : '0' + x;
 }
 
-__attribute__((unused))
-static uint8_t* uint16_to_string(uint16_t x)
-{
-  static uint8_t buf[4];
-
-  buf[3] = hex(nibble(x, 0));
-  buf[2] = hex(nibble(x, 1));
-  buf[1] = hex(nibble(x, 2));
-  buf[0] = hex(nibble(x, 3));
-
-  return buf;
-}
-
 static uint8_t* uint32_to_string(uint32_t x)
 {
   static uint8_t buf[8];
@@ -97,12 +84,18 @@ static uint8_t* uint32_to_string(uint32_t x)
 /* high resolution frequency counter implementation
  */
 
-/* timer0 interrupt handler. timer0 is a 8 bits counter
-   incremented by the input signal rising edges. since
-   8 bits are not enough to integrate, an auxiliary
-   register (tim0_ovf_counter) is updated on overflow.
-   tim0_ovf_counter is an 8 bits register, and will
-   overflow without any notice past 0xff.
+/* timer2 interrupt handler. timer1 is an extended
+   32 bits register (16 bits hard + 16 softs)
+   incremented once per:
+   1 / (fcpu / prescal) <=> prescal / fcpu
+   thus, it will overflow at:
+   2^16 * prescal / fcpu
+   on tim2 overflow, the interrupt handler is called
+   and stores the tim1 current value in tim1_cur_counter.
+   thus, the tim1 value integrated over the whole
+   tim1 period is:
+   (tim1_ovf_counter * 2^16) + tim1_cur_counter.
+   tim2_is_ovf is set to notify the application.
  */
 
 static volatile uint8_t tim2_ovf_counter;
@@ -124,17 +117,12 @@ ISR(TIMER2_OVF_vect)
   }
 }
 
-/* timer1 interrupt handler. timer1 is a 16 bits
-   register incremented once per:
-   1 / (fcpu / prescal) <=> prescal / fcpu
-   thus, it will overflow at:
-   2^16 * prescal / fcpu
-   on overflow, the interrupt handler is called and
-   stores the timer0 current value in tim0_cur_counter.
-   thus, the timer0 value integrated over the whole
-   timer1 period is:
-   (tim0_ovf_counter * 2^8) + tim0_cur_counter.
-   tim0_is_ovf is set to notify the application.
+/* timer2 interrupt handler. timer2 is a 8 bits counter
+   incremented by the input signal rising edges. since
+   8 bits are not enough to integrate, an auxiliary
+   register (tim2_ovf_counter) is updated on overflow.
+   tim2_ovf_counter is an 8 bits register, and will
+   overflow without any notice past 0xff.
  */
 
 static volatile uint8_t tim1_ovf_counter;
